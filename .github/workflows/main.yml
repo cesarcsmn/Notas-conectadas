@@ -1,0 +1,45 @@
+name: Publicar Notas Conectadas
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'notas-pwa.zip'
+      - '.github/workflows/publicar-pwa.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extrair pacote
+        run: |
+          mkdir -p site
+          unzip -q notas-pwa.zip -d site
+          test -f site/index.html
+          test -f site/sw.js
+          test -f site/manifest.webmanifest
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v4
+        id: deploy
